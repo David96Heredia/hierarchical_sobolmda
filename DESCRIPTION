@@ -1,0 +1,21 @@
+Package: sobolMDA
+Type: Package
+Title: Sobol-MDA variable importance for random forests
+Version: 0.1.0
+Date: 2021-01-22
+Author: Clement Benard [cre], Marvin N. Wright [ctb, cph]
+Maintainer: Clement Benard <clement.benard5@gmail.com>
+Description: ranger implementation of random forests, augmented with the Sobol-MDA: 
+        a variable importance measure which provides the proportion of output explained
+        variance lost when a given variable is removed from the data. The Sobol-MDA
+        fixes the bias of Breiman's MDA when input variables are dependent, and is 
+        based on projections of the tree partitions of the forest. 
+License: GPL-3
+Imports: Rcpp (>= 0.11.2), Matrix
+LinkingTo: Rcpp, RcppEigen
+Depends: R (>= 3.1)
+Suggests: survival, testthat
+Encoding: UTF-8
+RoxygenNote: 7.1.1
+URL: https://gitlab.com/drti/sobolmda
+BugReports: https://gitlab.com/drti/sobolmda/issues
