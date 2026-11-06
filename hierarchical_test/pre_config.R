@@ -1,17 +1,33 @@
 # =============================================================
-# pre_config.R: Patch and install ranger from root into custom_lib
+# pre_config.R: Auto-resolving path configuration & compilation
 # =============================================================
 
-# Determine directory paths relative to this script
-test_dir   <- getwd() # Expected to run from inside hierarchical_test
+# 1. Automatically detect script location regardless of working directory
+get_script_dir <- function() {
+  if (requireNamespace("rstudioapi", quietly = TRUE) && rstudioapi::isAvailable()) {
+    p <- tryCatch(rstudioapi::getSourceEditorContext()$path, error = function(e) "")
+    if (nzchar(p)) return(dirname(normalizePath(p, winslash = "/")))
+  }
+  for (frame in sys.frames()) {
+    if (exists("ofile", envir = frame, inherits = FALSE)) {
+      return(dirname(normalizePath(get("ofile", envir = frame), winslash = "/")))
+    }
+  }
+  normalizePath(getwd(), winslash = "/")
+}
+
+test_dir   <- get_script_dir()
 pkg_root   <- normalizePath(file.path(test_dir, ".."), winslash = "/")
 custom_lib <- file.path(test_dir, "custom_lib")
+
+message("Working in: ", test_dir)
+message("Package root located at: ", pkg_root)
 
 if (!dir.exists(custom_lib)) {
   dir.create(custom_lib, recursive = TRUE)
 }
 
-# 1. Apply C++ GCC 14 make_unique patch to src/utility.h
+# 2. Apply C++ GCC 14 make_unique patch to src/utility.h
 util_path <- file.path(pkg_root, "src", "utility.h")
 if (file.exists(util_path)) {
   lines <- readLines(util_path, warn = FALSE)
@@ -33,7 +49,7 @@ if (file.exists(util_path)) {
   stop("Cannot find src/utility.h at: ", util_path)
 }
 
-# 2. Ensure Makevars and Makevars.win exist
+# 3. Ensure Makevars and Makevars.win exist
 makevars_content <- c(
   "PKG_CPPFLAGS = -DR_NO_REMAP -DNDEBUG",
   "PKG_CXXFLAGS = -Wno-ignored-attributes"
@@ -43,11 +59,11 @@ writeLines(makevars_content, con = file.path(pkg_root, "src", "Makevars"))
 writeLines(makevars_content, con = file.path(pkg_root, "src", "Makevars.win"))
 message("Configured Makevars and Makevars.win")
 
-# 3. Compile and install into custom_lib
+# 4. Compile and install into custom_lib
 message("Installing ranger into custom_lib...")
 r_bin <- file.path(R.home("bin"), "R.exe")
 if (!file.exists(r_bin)) {
-  r_bin <- file.path(R.home("bin"), "R") # Fallback for Linux/macOS cloud
+  r_bin <- file.path(R.home("bin"), "R") # Fallback for Linux/macOS
 }
 
 install_status <- system2(
